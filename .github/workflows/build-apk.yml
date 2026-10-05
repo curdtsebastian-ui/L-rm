@@ -1,0 +1,39 @@
+name: Lärmprotokoll APK bauen
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v4
+
+      - name: Projekt entpacken
+        run: |
+          mkdir -p project
+          unzip -o Laermprotokoll_V07_Source_FIX.zip -d project
+
+      - name: Java 17 einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Gradle einrichten
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: APK bauen
+        working-directory: project
+        run: |
+          gradle assembleDebug --no-daemon
+
+      - name: APK bereitstellen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Laermprotokoll-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
