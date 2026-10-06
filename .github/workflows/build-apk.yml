@@ -1,1 +1,76 @@
+name: Laermprotokoll APK bauen
 
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v4
+
+      - name: ZIP pruefen
+        run: |
+          ls -la
+          test -f Laermprotokoll_V08_variabler_dB_Hund_Esel.zip
+
+      - name: Projekt entpacken
+        run: |
+          mkdir -p project
+          unzip -o Laermprotokoll_V08_variabler_dB_Hund_Esel.zip -d project
+
+      - name: Kotlin-Datei automatisch korrigieren
+        working-directory: project
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          files = list(Path(".").rglob("MainActivity.kt"))
+
+          if not files:
+              raise SystemExit("MainActivity.kt nicht gefunden")
+
+          for file in files:
+              print("Gefunden:", file)
+              text = file.read_text()
+
+              old1 = "override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray)"
+              new1 = "override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray)"
+
+              if old1 in text:
+                  text = text.replace(old1, new1)
+                  print("Methodensignatur korrigiert")
+
+              old2 = "super.onRequestPermissionsResult(requestCode, permissions, grantResults)"
+              new2 = "super.onRequestPermissionsResult(requestCode, permissions.toList().toTypedArray(), grantResults)"
+
+              if old2 in text:
+                  text = text.replace(old2, new2)
+                  print("super-Aufruf korrigiert")
+
+              file.write_text(text)
+
+          PY
+
+      - name: Java 17 einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Gradle einrichten
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: APK bauen
+        working-directory: project
+        run: |
+          gradle assembleDebug --no-daemon
+
+      - name: APK bereitstellen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Laermprotokoll-V08-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
