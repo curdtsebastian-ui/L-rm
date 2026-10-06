@@ -14,12 +14,12 @@ jobs:
       - name: ZIP pruefen
         run: |
           ls -la
-          test -f Laermprotokoll_V07_Source_FIX.zip
+          test -f Laermprotokoll_V07_Source_FIX_KotlinFix.zip
 
       - name: Projekt entpacken
         run: |
           mkdir -p project
-          unzip -o Laermprotokoll_V07_Source_FIX.zip -d project
+          unzip -o Laermprotokoll_V07_Source_FIX_KotlinFix.zip -d project
 
       - name: Java 17 einrichten
         uses: actions/setup-java@v4
